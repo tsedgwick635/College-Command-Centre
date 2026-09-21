@@ -64,12 +64,25 @@
 
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:100; backdrop-filter: blur(5px); }
         .modal { background: var(--card); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid var(--acc); }
+
+        /* Timetable Styles */
+        .live-banner { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid var(--acc); border-radius: 16px; padding: 25px; margin-bottom: 30px; text-align: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
+        .timer-display { font-size: 3rem; font-weight: 900; color: var(--acc); font-family: monospace; margin: 10px 0; }
+        .day-group { margin-bottom: 30px; }
+        .day-title { font-size: 1.3rem; font-weight: bold; color: var(--acc); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 12px; }
+        .timetable-row { background: var(--card); padding: 15px 20px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+        .timetable-row.active-lesson { border-color: var(--today-border); background: var(--today-bg); }
+        .lesson-time { font-weight: bold; color: var(--acc); min-width: 120px; }
+        .lesson-details { flex-grow: 1; padding: 0 15px; }
+        .lesson-name { font-weight: bold; margin-bottom: 3px; }
+        .lesson-meta { font-size: 0.85rem; color: var(--dim); }
     </style>
 </head>
 <body>
 
 <nav>
     <button id="nav-home" class="active" onclick="showPage('home')">Holidays</button>
+    <button id="nav-timetable" onclick="showPage('timetable')">Timetable</button>
     <button id="nav-count" onclick="showPage('count')">Major Breaks</button>
     <button id="nav-relax" onclick="showPage('relax')" style="margin-left: auto; color: #f87171;">Off Mode</button>
 </nav>
@@ -89,6 +102,17 @@
         <div class="progress-bg"><div id="progress-fill"></div></div>
     </div>
     <div class="grid" id="grid"></div>
+</div>
+
+<div id="page-timetable" class="page">
+    <div class="live-banner">
+        <span style="text-transform: uppercase; letter-spacing: 1px; color: var(--dim); font-size: 0.8rem; font-weight: bold;">Current Status</span>
+        <h2 id="current-lesson-title" style="margin: 5px 0; font-size: 1.5rem;">No active class</h2>
+        <div id="timer-countdown" class="timer-display">--:--:--</div>
+        <div id="next-lesson-sub" style="color: var(--dim); font-size: 0.9rem;">Checking timetable...</div>
+    </div>
+
+    <div id="timetable-list"></div>
 </div>
 
 <div id="page-count" class="page">
@@ -136,6 +160,40 @@
         { id: 5, n: "Summer Break", start: new Date(2027, 6, 3), end: new Date(2027, 8, 1), type: "Major Break", term: "Summer Term End" }
     ];
 
+    // Weekly Timetable Data extracted directly from screenshot images
+    const schedule = [
+        // Monday
+        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:30", teacher: "Bruce Mackie", room: "A-309" },
+        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Malcolm Buchanan", room: "A-622" },
+        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Tutorial Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" },
+        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Barbara Grove", room: "A-621" },
+
+        // Tuesday
+        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:30", teacher: "Bruce Mackie", room: "A-309" },
+        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Preeti Singh", room: "A-621" },
+        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Preeti Singh", room: "A-621" },
+        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Preeti Singh", room: "A-621" },
+
+        // Wednesday
+        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:45", teacher: "Bruce Mackie", room: "A-621" },
+        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Malcolm Buchanan", room: "A-622" },
+        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "16:00", teacher: "Malcolm Buchanan", room: "A-622" },
+        { day: "Wednesday", dayIdx: 3, name: "CV Writing & Preparing for Interviews", start: "15:30", end: "16:30", teacher: "Online", room: "Google Classroom" },
+
+        // Thursday
+        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "11:00", teacher: "Preeti Singh", room: "A-622" },
+        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "11:00", end: "12:30", teacher: "Malcolm Buchanan", room: "A-622" },
+        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Barbara Grove", room: "A-621" },
+        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" },
+        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Preeti Singh", room: "A-621" },
+
+        // Friday
+        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "11:30", teacher: "Malcolm Buchanan", room: "A-622" },
+        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "11:30", end: "12:30", teacher: "Barbara Grove", room: "A-621" },
+        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Barbara Grove", room: "A-621" },
+        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" }
+    ];
+
     let currentHolidayId = null;
 
     function showPage(pId) {
@@ -144,6 +202,7 @@
         document.getElementById('page-'+pId).classList.add('active');
         document.getElementById('nav-'+pId).classList.add('active');
         if(pId === 'count' || pId === 'relax') updateCountdowns();
+        if(pId === 'timetable') renderTimetable();
     }
 
     function getDaysUntil(targetDate) {
@@ -162,13 +221,11 @@
         const now = new Date();
         const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        // Finished breaks
         const passedHolidays = holidays.filter(h => {
             const hEnd = new Date(h.end.getFullYear(), h.end.getMonth(), h.end.getDate());
             return todayMidnight > hEnd;
         });
 
-        // Upcoming/active breaks
         const remainingHolidays = holidays.filter(h => {
             const hEnd = new Date(h.end.getFullYear(), h.end.getMonth(), h.end.getDate());
             return todayMidnight <= hEnd;
@@ -266,8 +323,131 @@
         document.getElementById('overlay').style.display = 'flex';
     }
 
-    setInterval(renderGrid, 60000); // refresh layout dynamically
+    /* Timetable Live Functionality */
+    function renderTimetable() {
+        const container = document.getElementById('timetable-list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+        const now = new Date();
+        const currentDayIdx = now.getDay();
+
+        days.forEach((dName, idx) => {
+            const dayLessons = schedule.filter(s => s.day === dName);
+            if(dayLessons.length === 0) return;
+
+            const dayGroup = document.createElement('div');
+            dayGroup.className = 'day-group';
+
+            let titleMarkup = `<div class="day-title">${dName}${currentDayIdx === (idx + 1) ? ' (Today)' : ''}</div>`;
+            let rowsMarkup = '';
+
+            dayLessons.forEach(l => {
+                let isActive = false;
+                if (currentDayIdx === (idx + 1)) {
+                    const startMin = parseTimeToMinutes(l.start);
+                    const endMin = parseTimeToMinutes(l.end);
+                    const nowMin = (now.getHours() * 60) + now.getMinutes();
+                    if (nowMin >= startMin && nowMin < endMin) {
+                        isActive = true;
+                    }
+                }
+
+                rowsMarkup += `
+                    <div class="timetable-row ${isActive ? 'active-lesson' : ''}">
+                        <div class="lesson-time">${l.start} - ${l.end}</div>
+                        <div class="lesson-details">
+                            <div class="lesson-name">${l.name}</div>
+                            <div class="lesson-meta">Teacher: ${l.teacher}</div>
+                        </div>
+                        <div class="lesson-meta" style="font-weight:bold; color:var(--acc);">${l.room}</div>
+                    </div>
+                `;
+            });
+
+            dayGroup.innerHTML = titleMarkup + rowsMarkup;
+            container.appendChild(dayGroup);
+        });
+    }
+
+    function parseTimeToMinutes(timeStr) {
+        const parts = timeStr.split(':');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+
+    function updateLessonTimer() {
+        const now = new Date();
+        const dayIdx = now.getDay(); 
+        const nowMin = (now.getHours() * 60) + now.getMinutes();
+        const nowSec = now.getSeconds();
+
+        const todayLessons = schedule.filter(s => s.dayIdx === dayIdx);
+
+        let activeLesson = null;
+        let nextLesson = null;
+
+        for (let l of todayLessons) {
+            const startMin = parseTimeToMinutes(l.start);
+            const endMin = parseTimeToMinutes(l.end);
+
+            if (nowMin >= startMin && nowMin < endMin) {
+                activeLesson = l;
+            } else if (nowMin < startMin && !nextLesson) {
+                nextLesson = l;
+            }
+        }
+
+        const titleEl = document.getElementById('current-lesson-title');
+        const timerEl = document.getElementById('timer-countdown');
+        const subEl = document.getElementById('next-lesson-sub');
+
+        if (!titleEl || !timerEl || !subEl) return;
+
+        if (activeLesson) {
+            titleEl.innerText = activeLesson.name;
+            titleEl.style.color = '#10b981';
+
+            const endMin = parseTimeToMinutes(activeLesson.end);
+            const totalSecRemaining = (endMin * 60) - ((nowMin * 60) + nowSec);
+
+            const h = Math.floor(totalSecRemaining / 3600);
+            const m = Math.floor((totalSecRemaining % 3600) / 60);
+            const s = totalSecRemaining % 60;
+
+            timerEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+            if (nextLesson) {
+                subEl.innerText = `Up Next: ${nextLesson.name} at ${nextLesson.start} (${nextLesson.room})`;
+            } else {
+                subEl.innerText = "No more classes scheduled for today!";
+            }
+        } else {
+            titleEl.style.color = '#f1f5f9';
+            if (nextLesson) {
+                titleEl.innerText = "Next Class Begins Soon";
+                const startMin = parseTimeToMinutes(nextLesson.start);
+                const totalSecRemaining = (startMin * 60) - ((nowMin * 60) + nowSec);
+
+                const h = Math.floor(totalSecRemaining / 3600);
+                const m = Math.floor((totalSecRemaining % 3600) / 60);
+                const s = totalSecRemaining % 60;
+
+                timerEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                subEl.innerText = `Up Next: ${nextLesson.name} (${nextLesson.room}) with ${nextLesson.teacher}`;
+            } else {
+                titleEl.innerText = "No Active Classes";
+                timerEl.innerText = "00:00:00";
+                subEl.innerText = "You are done with lessons for today!";
+            }
+        }
+    }
+
+    setInterval(renderGrid, 60000);
+    setInterval(updateLessonTimer, 1000);
+    
     renderGrid();
+    updateLessonTimer();
 </script>
 </body>
 </html>
