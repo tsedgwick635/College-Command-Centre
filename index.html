@@ -1,453 +1,770 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Year 2026/2027 Command Centre</title>
+    <title>Academic & Timetable Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            900: '#312e81',
+                        },
+                        accent: {
+                            cyan: '#06b6d4',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                            purple: '#a855f7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root { 
-            --bg: #0f172a; --card: #1e293b; --acc: #38bdf8; --txt: #f1f5f9; 
-            --dim: #94a3b8; --today-bg: #064e3b; --today-border: #10b981;
-            --p-high: #ef4444; --p-mid: #f59e0b; --p-low: #10b981;
-            --milestone: #818cf8; --accent-pink: #d946ef;
-            --urgent: #ef4444; --soon: #f59e0b;
-        }
-        body { font-family: sans-serif; background: var(--bg); color: var(--txt); margin: 0; padding: 0; }
-        
-        nav { background: #1e293b; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 20px; position: sticky; top: 0; z-index: 50; }
-        nav button { background: none; border: none; color: var(--dim); font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-        nav button.active { color: var(--acc); border-bottom: 2px solid var(--acc); }
-
-        .page { display: none; padding: 40px 20px; max-width: 1000px; margin: 0 auto; }
-        .page.active { display: block; }
-
-        .action-banner { background: linear-gradient(90deg, #1e293b 0%, #24324d 100%); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--acc); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-        .next-info h3 { margin: 0; font-size: 0.75rem; text-transform: uppercase; color: var(--acc); letter-spacing: 1px; }
-        .next-info p { margin: 5px 0 0 0; font-size: 1.3rem; font-weight: bold; }
-        
-        .progress-container { margin-bottom: 30px; }
-        .progress-text { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold; }
-        .holidays-left-badge { color: var(--acc); font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.2); }
-        .progress-bg { background: #334155; height: 12px; border-radius: 10px; overflow: hidden; }
-        #progress-fill { background: linear-gradient(90deg, var(--acc), var(--accent-pink)); height: 100%; width: 0%; transition: width 1s ease-in-out; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; position: relative; }
-        .card:hover { transform: translateY(-3px); border-color: white; }
-
-        .card.is-today { background: var(--today-bg); border: 2px solid var(--today-border); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-        .card.is-tomorrow { border: 2px solid var(--urgent); animation: pulse-red 2s infinite; }
-        .card.is-next { border: 2px solid var(--acc); box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #090d16);
+            min-height: 100vh;
+            color: #f8fafc;
         }
 
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .card-title { font-weight: bold; font-size: 1.1rem; color: white; }
-        .days-badge { font-size: 1.4rem; font-weight: 900; color: var(--acc); }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
 
-        .footer { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--dim); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px; align-items: flex-end; }
-        .footer-left { display: flex; flex-direction: column; gap: 4px; }
-        .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        .type-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
-        .type-halfterm { background: #38bdf8; color: #0f172a; }
-        .type-major { background: var(--accent-pink); color: white; }
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
 
-        .countdown-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .milestone-card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .days-number { font-size: 4rem; font-weight: 900; display: block; color: white; margin: 10px 0; }
-        .milestone-date { color: var(--dim); font-size: 0.8rem; }
+        .active-lesson-glow {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.25);
+            border: 1px solid rgba(129, 140, 248, 0.4);
+        }
 
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:100; backdrop-filter: blur(5px); }
-        .modal { background: var(--card); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid var(--acc); }
-
-        /* Timetable Styles */
-        .live-banner { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid var(--acc); border-radius: 16px; padding: 25px; margin-bottom: 30px; text-align: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
-        .timer-display { font-size: 3rem; font-weight: 900; color: var(--acc); font-family: monospace; margin: 10px 0; }
-        .day-group { margin-bottom: 30px; }
-        .day-title { font-size: 1.3rem; font-weight: bold; color: var(--acc); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 12px; }
-        .timetable-row { background: var(--card); padding: 15px 20px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
-        .timetable-row.active-lesson { border-color: var(--today-border); background: var(--today-bg); }
-        .lesson-time { font-weight: bold; color: var(--acc); min-width: 120px; }
-        .lesson-details { flex-grow: 1; padding: 0 15px; }
-        .lesson-name { font-weight: bold; margin-bottom: 3px; }
-        .lesson-meta { font-size: 0.85rem; color: var(--dim); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen text-slate-100 selection:bg-brand-500 selection:text-white">
 
-<nav>
-    <button id="nav-home" class="active" onclick="showPage('home')">Holidays</button>
-    <button id="nav-timetable" onclick="showPage('timetable')">Timetable</button>
-    <button id="nav-count" onclick="showPage('count')">Major Breaks</button>
-    <button id="nav-relax" onclick="showPage('relax')" style="margin-left: auto; color: #f87171;">Off Mode</button>
-</nav>
+    <!-- Header / Navigation Bar -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3.5 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Brand / Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-graduation-cap text-lg text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                        Alton Academic Hub
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Mechanical & Electrical • Year 1</p>
+                </div>
+            </div>
 
-<div id="page-home" class="page active">
-    <div class="action-banner">
-        <div class="next-info">
-            <h3>Next Break:</h3>
-            <p id="next-holiday-text">Scanning...</p>
+            <!-- Live Clock Header Widget -->
+            <div class="hidden lg:flex items-center gap-4 bg-slate-900/60 px-4 py-1.5 rounded-full border border-slate-800">
+                <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <i class="fa-regular fa-clock text-brand-400"></i>
+                    <span id="headerLiveClock" class="font-mono font-semibold text-slate-200">--:--:--</span>
+                </div>
+                <span class="text-slate-700">|</span>
+                <div class="text-xs font-medium text-slate-300" id="headerLiveDate">Loading date...</div>
+            </div>
+
+            <!-- Tab Switcher Navigation -->
+            <nav class="flex p-1 bg-slate-900/80 rounded-xl border border-slate-800/80 w-full md:w-auto">
+                <button id="tabLessonsBtn" onclick="switchTab('lessons')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-md">
+                    <i class="fa-solid fa-book-bookmark text-xs"></i>
+                    <span>Lessons</span>
+                </button>
+                <button id="tabHolidaysBtn" onclick="switchTab('holidays')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-200">
+                    <i class="fa-solid fa-umbrella-beach text-xs"></i>
+                    <span>Holidays & Insets</span>
+                </button>
+            </nav>
         </div>
-    </div>
-    <div class="progress-container">
-        <div class="progress-text">
-            <span>Academic Year Progress (<span id="holidays-passed">0</span>/<span id="total-holidays">0</span> Passed)</span>
-            <span class="holidays-left-badge"><span id="holidays-remaining">0</span> Breaks Ahead</span>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ================= PAGE 1: LESSON COUNTDOWNS ================= -->
+        <section id="lessonsView" class="space-y-6">
+            
+            <!-- Live Status & Hero Countdown Banner -->
+            <div id="liveBanner" class="relative overflow-hidden rounded-2xl glass-panel p-6 lg:p-8 border border-brand-500/30">
+                <div class="absolute -top-24 -right-24 w-72 h-72 bg-brand-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                    <!-- Left Hero Info -->
+                    <div class="space-y-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold uppercase tracking-wider">
+                            <span class="w-2 h-2 rounded-full bg-brand-400 animate-ping"></span>
+                            <span id="liveStatusBadge">Current Status</span>
+                        </div>
+                        <h2 id="liveLessonTitle" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                            Calculating Schedule...
+                        </h2>
+                        <div id="liveLessonMeta" class="flex flex-wrap items-center gap-4 text-sm text-slate-300 font-medium">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Right Hero Timer -->
+                    <div class="flex flex-col items-start lg:items-end justify-center bg-slate-900/80 p-4 sm:p-5 rounded-2xl border border-slate-800/90 shadow-inner min-w-[240px]">
+                        <span id="countdownLabel" class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Time Remaining</span>
+                        <div id="heroCountdown" class="text-3xl sm:text-4xl font-black font-mono tracking-wider text-brand-400">
+                            00:00:00
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                            <div id="heroProgressBar" class="bg-gradient-to-r from-brand-500 to-accent-cyan h-full w-0 transition-all duration-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day Selector Bar -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-panel p-3 rounded-xl">
+                <div class="flex items-center gap-2 text-sm font-semibold text-slate-300 pl-2">
+                    <i class="fa-solid fa-calendar-day text-brand-400"></i>
+                    <span>Select Schedule View:</span>
+                </div>
+                <div class="flex flex-wrap gap-1 w-full sm:w-auto" id="dayButtonsContainer">
+                    <button onclick="setSelectedDay(1)" data-day="1" class="day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">Mon</button>
+                    <button onclick="setSelectedDay(2)" data-day="2" class="day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">Tue</button>
+                    <button onclick="setSelectedDay(3)" data-day="3" class="day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">Wed</button>
+                    <button onclick="setSelectedDay(4)" data-day="4" class="day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">Thu</button>
+                    <button onclick="setSelectedDay(5)" data-day="5" class="day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">Fri</button>
+                    <button onclick="resetToToday()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600/30 text-brand-300 border border-brand-500/30 hover:bg-brand-600/50 transition-all ml-1">Today</button>
+                </div>
+            </div>
+
+            <!-- Timeline / Schedule List -->
+            <div class="space-y-3" id="scheduleList">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: HOLIDAYS & INSET DAYS ================= -->
+        <section id="holidaysView" class="hidden space-y-6">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-umbrella-beach text-accent-cyan"></i>
+                        Holidays & Alton Inset Days
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">Academic Year 2026/27 key breaks and campus closures</p>
+                </div>
+
+                <!-- Filter Tags -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> College Breaks
+                    </span>
+                    <span class="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> Alton Inset Days
+                    </span>
+                </div>
+            </div>
+
+            <!-- Holidays & Inset Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6" id="holidaysGrid">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>© Academic & Timetable Hub • Alton Campus Year 1</p>
+            <p class="text-slate-600">Configured for GitHub Pages Deployment</p>
         </div>
-        <div class="progress-bg"><div id="progress-fill"></div></div>
-    </div>
-    <div class="grid" id="grid"></div>
-</div>
+    </footer>
 
-<div id="page-timetable" class="page">
-    <div class="live-banner">
-        <span style="text-transform: uppercase; letter-spacing: 1px; color: var(--dim); font-size: 0.8rem; font-weight: bold;">Current Status</span>
-        <h2 id="current-lesson-title" style="margin: 5px 0; font-size: 1.5rem;">No active class</h2>
-        <div id="timer-countdown" class="timer-display">--:--:--</div>
-        <div id="next-lesson-sub" style="color: var(--dim); font-size: 0.9rem;">Checking timetable...</div>
-    </div>
+    <script>
+        // ================= TIMETABLE & BREAK DATA ================= //
+        
+        // Base Timetable Configuration
+        const BASE_TIMETABLE = {
+            1: [ // Monday
+                { id: "m1", title: "Mechanical & Electrical - Year 1", room: "A-309", teacher: "Bruce Mackie", start: "10:00", end: "12:30" },
+                { id: "m2", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Malcolm Buchanan", start: "13:15", end: "14:15" },
+                { id: "m3", title: "Mechanical & Electrical - Tutorial Year 1", room: "A-621", teacher: "Barbara Grove", start: "14:20", end: "15:20" },
+                { id: "m4", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "15:30", end: "16:30" }
+            ],
+            2: [ // Tuesday
+                { id: "t1", title: "Mechanical & Electrical - Year 1", room: "A-309", teacher: "Bruce Mackie", start: "10:00", end: "12:30" },
+                { id: "t2", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "ALTERNATING", isAlternating: true, start: "13:15", end: "14:15" },
+                { id: "t3", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Preeti Singh", start: "14:20", end: "15:20" },
+                { id: "t4", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Preeti Singh", start: "15:30", end: "16:30" }
+            ],
+            3: [ // Wednesday (Excludes CV Writing at 15:30-16:30)
+                { id: "w1", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Bruce Mackie", start: "10:00", end: "12:45" },
+                { id: "w2", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Malcolm Buchanan", start: "13:15", end: "14:15" },
+                { id: "w3", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Malcolm Buchanan", start: "14:20", end: "16:00" }
+            ],
+            4: [ // Thursday
+                { id: "th1", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Preeti Singh", start: "10:00", end: "11:00" },
+                { id: "th2", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Malcolm Buchanan", start: "11:00", end: "12:30" },
+                { id: "th3", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "13:15", end: "14:15" },
+                { id: "th4", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "14:20", end: "15:20" },
+                { id: "th5", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Preeti Singh", start: "15:30", end: "16:30" }
+            ],
+            5: [ // Friday
+                { id: "f1", title: "Mechanical & Electrical - Year 1", room: "A-622", teacher: "Malcolm Buchanan", start: "10:00", end: "11:30" },
+                { id: "f2", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "11:30", end: "12:30" },
+                { id: "f3", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "13:15", end: "14:15" },
+                { id: "f4", title: "Mechanical & Electrical - Year 1", room: "A-621", teacher: "Barbara Grove", start: "14:20", end: "15:20" }
+            ]
+        };
 
-    <div id="timetable-list"></div>
-</div>
+        // Holidays and Inset Days List
+        const HOLIDAYS_AND_INSETS = [
+            {
+                id: "h1",
+                name: "Autumn Half Term",
+                type: "Half Term Break",
+                category: "break",
+                startDate: "2026-10-26T00:00:00",
+                endDate: "2026-10-30T23:59:59",
+                description: "College closed for Autumn Half Term."
+            },
+            {
+                id: "i1",
+                name: "Alton College Inset Day",
+                type: "Alton Inset Day",
+                category: "inset",
+                startDate: "2026-10-09T00:00:00",
+                endDate: "2026-10-09T23:59:59",
+                description: "College is closed to all students on the Alton campus."
+            },
+            {
+                id: "h2",
+                name: "Christmas Break",
+                type: "College Holiday",
+                category: "break",
+                startDate: "2026-12-18T00:00:00",
+                endDate: "2027-01-03T23:59:59",
+                description: "End of Autumn term Christmas holiday."
+            },
+            {
+                id: "h3",
+                name: "Spring Half Term",
+                type: "Half Term Break",
+                category: "break",
+                startDate: "2027-02-15T00:00:00",
+                endDate: "2027-02-19T23:59:59",
+                description: "Mid-term break for Spring term."
+            },
+            {
+                id: "i2",
+                name: "Alton College Inset Day",
+                type: "Alton Inset Day",
+                category: "inset",
+                startDate: "2027-03-11T00:00:00",
+                endDate: "2027-03-11T23:59:59",
+                description: "College is closed to all students on the Alton campus."
+            },
+            {
+                id: "h4",
+                name: "Easter Break",
+                type: "College Holiday",
+                category: "break",
+                startDate: "2027-03-26T00:00:00",
+                endDate: "2027-04-11T23:59:59",
+                description: "Spring holiday / Easter break."
+            },
+            {
+                id: "h5",
+                name: "Summer Half Term",
+                type: "Half Term Break",
+                category: "break",
+                startDate: "2027-05-31T00:00:00",
+                endDate: "2027-06-04T23:59:59",
+                description: "Summer mid-term break."
+            },
+            {
+                id: "h6",
+                name: "Summer Break",
+                type: "College Holiday",
+                category: "break",
+                startDate: "2027-07-03T00:00:00",
+                endDate: "2027-09-01T23:59:59",
+                description: "End of academic year summer holiday."
+            }
+        ];
 
-<div id="page-count" class="page">
-    <h1 style="text-align:center; margin-bottom: 30px;">Major School Breaks</h1>
-    <div class="countdown-container">
-        <div class="milestone-card" style="border-color: var(--acc);">
-            <h2 style="color:var(--acc); font-size: 0.9rem; margin:0;">CHRISTMAS BREAK</h2>
-            <span class="days-number" id="c-christmas">--</span>
-            <div class="milestone-date">18 Dec 2026 – 3 Jan 2027</div>
-        </div>
-        <div class="milestone-card" style="border-color: var(--accent-pink);">
-            <h2 style="color:var(--accent-pink); font-size: 0.9rem; margin:0;">EASTER BREAK</h2>
-            <span class="days-number" id="c-easter">--</span>
-            <div class="milestone-date">26 Mar 2027 – 11 Apr 2027</div>
-        </div>
-        <div class="milestone-card" style="border-color: var(--milestone);">
-            <h2 style="color:var(--milestone); font-size: 0.9rem; margin:0;">SUMMER BREAK</h2>
-            <span class="days-number" id="c-summer">--</span>
-            <div class="milestone-date">3 Jul 2027 – 1 Sep 2027</div>
-        </div>
-    </div>
-</div>
+        // State variables
+        let selectedDayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon ...
+        if (selectedDayIndex === 0 || selectedDayIndex === 6) selectedDayIndex = 1; // Default to Monday on weekends
+        let currentTab = 'lessons';
 
-<div id="page-relax" class="page" style="text-align:center; padding-top: 50px;">
-    <div style="color:var(--dim); font-size:1.2rem;">Days until Summer Break:</div>
-    <div id="relax-big-count" style="font-size:8rem; font-weight:900; color:var(--acc);">--</div>
-    <div id="relax-sub-text" style="color:var(--dim)">Counting down to total freedom...</div>
-</div>
-
-<div class="modal-overlay" id="overlay" onclick="this.style.display='none'">
-    <div class="modal" onclick="event.stopPropagation()">
-        <h2 id="m-title" style="margin-top:0; color:var(--acc);"></h2>
-        <ul id="m-list" style="text-align:left; padding:0; list-style:none; line-height: 1.8;"></ul>
-    </div>
-</div>
-
-<script>
-    // Academic Calendar Data based on image details (Academic Year 2026/2027)
-    const holidays = [
-        { id: 0, n: "Autumn Half Term", start: new Date(2026, 9, 26), end: new Date(2026, 9, 30), type: "Half Term", term: "Autumn Term" },
-        { id: 1, n: "Christmas Break", start: new Date(2026, 11, 18), end: new Date(2027, 0, 3), type: "Major Break", term: "Autumn Term End" },
-        { id: 2, n: "Spring Half Term", start: new Date(2027, 1, 15), end: new Date(2027, 1, 19), type: "Half Term", term: "Spring Term" },
-        { id: 3, n: "Easter Break", start: new Date(2027, 2, 26), end: new Date(2027, 3, 11), type: "Major Break", term: "Spring Term End" },
-        { id: 4, n: "Summer Half Term", start: new Date(2027, 4, 31), end: new Date(2027, 5, 4), type: "Half Term", term: "Summer Term" },
-        { id: 5, n: "Summer Break", start: new Date(2027, 6, 3), end: new Date(2027, 8, 1), type: "Major Break", term: "Summer Term End" }
-    ];
-
-    // Weekly Timetable Data extracted directly from screenshot images
-    const schedule = [
-        // Monday
-        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:30", teacher: "Bruce Mackie", room: "A-309" },
-        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Malcolm Buchanan", room: "A-622" },
-        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Tutorial Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" },
-        { day: "Monday", dayIdx: 1, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Barbara Grove", room: "A-621" },
-
-        // Tuesday
-        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:30", teacher: "Bruce Mackie", room: "A-309" },
-        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Preeti Singh", room: "A-621" },
-        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Preeti Singh", room: "A-621" },
-        { day: "Tuesday", dayIdx: 2, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Preeti Singh", room: "A-621" },
-
-        // Wednesday
-        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "12:45", teacher: "Bruce Mackie", room: "A-621" },
-        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Malcolm Buchanan", room: "A-622" },
-        { day: "Wednesday", dayIdx: 3, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "16:00", teacher: "Malcolm Buchanan", room: "A-622" },
-        { day: "Wednesday", dayIdx: 3, name: "CV Writing & Preparing for Interviews", start: "15:30", end: "16:30", teacher: "Online", room: "Google Classroom" },
-
-        // Thursday
-        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "11:00", teacher: "Preeti Singh", room: "A-622" },
-        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "11:00", end: "12:30", teacher: "Malcolm Buchanan", room: "A-622" },
-        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Barbara Grove", room: "A-621" },
-        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" },
-        { day: "Thursday", dayIdx: 4, name: "Mechanical & Electrical - Year 1", start: "15:30", end: "16:30", teacher: "Preeti Singh", room: "A-621" },
-
-        // Friday
-        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "10:00", end: "11:30", teacher: "Malcolm Buchanan", room: "A-622" },
-        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "11:30", end: "12:30", teacher: "Barbara Grove", room: "A-621" },
-        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "13:15", end: "14:15", teacher: "Barbara Grove", room: "A-621" },
-        { day: "Friday", dayIdx: 5, name: "Mechanical & Electrical - Year 1", start: "14:20", end: "15:20", teacher: "Barbara Grove", room: "A-621" }
-    ];
-
-    let currentHolidayId = null;
-
-    function showPage(pId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-'+pId).classList.add('active');
-        document.getElementById('nav-'+pId).classList.add('active');
-        if(pId === 'count' || pId === 'relax') updateCountdowns();
-        if(pId === 'timetable') renderTimetable();
-    }
-
-    function getDaysUntil(targetDate) {
-        const now = new Date();
-        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const targetMidnight = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-        const diffTime = targetMidnight - todayMidnight;
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    function renderGrid() {
-        const g = document.getElementById('grid');
-        if (!g) return;
-        g.innerHTML = '';
-
-        const now = new Date();
-        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        const passedHolidays = holidays.filter(h => {
-            const hEnd = new Date(h.end.getFullYear(), h.end.getMonth(), h.end.getDate());
-            return todayMidnight > hEnd;
-        });
-
-        const remainingHolidays = holidays.filter(h => {
-            const hEnd = new Date(h.end.getFullYear(), h.end.getMonth(), h.end.getDate());
-            return todayMidnight <= hEnd;
-        });
-
-        document.getElementById('progress-fill').style.width = ((passedHolidays.length / holidays.length) * 100) + "%";
-        document.getElementById('holidays-passed').innerText = passedHolidays.length;
-        document.getElementById('total-holidays').innerText = holidays.length;
-        document.getElementById('holidays-remaining').innerText = remainingHolidays.length;
-
-        remainingHolidays.forEach((h, index) => {
-            const daysLeft = getDaysUntil(h.start);
-            const isNext = index === 0;
-
-            let statusClass = '';
-            let daysDisplay = '';
-
-            if (daysLeft < 0) {
-                statusClass = 'is-today';
-                daysDisplay = 'Active!';
-            } else if (daysLeft === 0) {
-                statusClass = 'is-tomorrow';
-                daysDisplay = 'Starts Today!';
-            } else if (daysLeft === 1) {
-                statusClass = 'is-tomorrow';
-                daysDisplay = '1 Day Left';
-            } else if (isNext) {
-                statusClass = 'is-next';
-                daysDisplay = `${daysLeft} Days`;
+        // Utility: Determine Tuesday Alternating Teacher
+        // Reference date: 22 Sep 2026 is Preeti Singh.
+        function getTuesdayTeacher(targetDate = new Date()) {
+            const refDate = new Date(2026, 8, 22); // 22 Sep 2026
+            const diffMs = targetDate - refDate;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffWeeks = Math.floor(diffDays / 7);
+            
+            if (Math.abs(diffWeeks) % 2 === 0) {
+                return { teacher: "Preeti Singh" };
             } else {
-                daysDisplay = `${daysLeft} Days`;
+                return { teacher: "Bruce Mackie" };
+            }
+        }
+
+        // Helper to format Time strings to Date objects for today
+        function parseTimeToDate(timeStr, baseDate = new Date()) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const d = new Date(baseDate);
+            d.setHours(hours, minutes, 0, 0);
+            return d;
+        }
+
+        // Helper to format milliseconds to HH:MM:SS or DD:HH:MM:SS
+        function formatCountdown(ms) {
+            if (ms <= 0) return "00:00:00";
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+            const pad = (n) => n.toString().padStart(2, '0');
+
+            if (days > 0) {
+                return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+            }
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const lessonsView = document.getElementById('lessonsView');
+            const holidaysView = document.getElementById('holidaysView');
+            const tabLessonsBtn = document.getElementById('tabLessonsBtn');
+            const tabHolidaysBtn = document.getElementById('tabHolidaysBtn');
+
+            if (tab === 'lessons') {
+                lessonsView.classList.remove('hidden');
+                holidaysView.classList.add('hidden');
+                
+                tabLessonsBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-md";
+                tabHolidaysBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-200";
+            } else {
+                lessonsView.classList.add('hidden');
+                holidaysView.classList.remove('hidden');
+
+                tabHolidaysBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-md";
+                tabLessonsBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-200";
+            }
+        }
+
+        function setSelectedDay(dayNum) {
+            selectedDayIndex = dayNum;
+            updateDaySelectorUI();
+            renderSchedule();
+        }
+
+        function resetToToday() {
+            let today = new Date().getDay();
+            if (today === 0 || today === 6) today = 1; // Default Mon on weekend
+            selectedDayIndex = today;
+            updateDaySelectorUI();
+            renderSchedule();
+        }
+
+        function updateDaySelectorUI() {
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const day = parseInt(btn.getAttribute('data-day'));
+                if (day === selectedDayIndex) {
+                    btn.className = "day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-brand-600 text-white shadow-md";
+                } else {
+                    btn.className = "day-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700";
+                }
+            });
+        }
+
+        function renderSchedule() {
+            const container = document.getElementById('scheduleList');
+            const now = new Date();
+            const currentDayNum = now.getDay();
+
+            const isViewingToday = (selectedDayIndex === currentDayNum);
+            const dayLessons = BASE_TIMETABLE[selectedDayIndex] || [];
+
+            if (dayLessons.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-panel p-8 rounded-2xl text-center text-slate-400">
+                        <i class="fa-solid fa-mug-hot text-3xl mb-2 text-slate-500"></i>
+                        <p class="font-medium">No lessons scheduled for this day.</p>
+                    </div>`;
+                return;
             }
 
-            const startFormatted = h.start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-            const endFormatted = h.end.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+            let html = '';
 
-            const typeBadgeClass = h.type === 'Half Term' ? 'type-halfterm' : 'type-major';
+            dayLessons.forEach((lesson) => {
+                let teacherName = lesson.teacher;
+                if (lesson.isAlternating) {
+                    teacherName = getTuesdayTeacher(now).teacher;
+                }
 
-            const card = document.createElement('div');
-            card.className = `card ${statusClass}`;
-            card.onclick = () => openModal(h, daysLeft);
-            card.innerHTML = `
-                <div class="card-header">
-                    <span class="card-title">${h.n}</span>
-                    <span class="days-badge">${daysDisplay}</span>
-                </div>
-                <div class="footer">
-                    <div class="footer-left">
-                        <span>${startFormatted} – ${endFormatted}</span>
-                        <span>${h.term}</span>
-                    </div>
-                    <div class="footer-right">
-                        <span class="type-badge ${typeBadgeClass}">${h.type}</span>
-                    </div>
-                </div>`;
-            g.appendChild(card);
-        });
+                const startTime = parseTimeToDate(lesson.start);
+                const endTime = parseTimeToDate(lesson.end);
 
-        const nextHoliday = remainingHolidays[0];
-        if (nextHoliday) {
-            const nextDays = getDaysUntil(nextHoliday.start);
-            const label = nextDays <= 0 ? 'ON BREAK NOW!' : `${nextHoliday.n} (in ${nextDays} days)`;
-            document.getElementById('next-holiday-text').innerText = label;
-        } else {
-            document.getElementById('next-holiday-text').innerText = "Academic Year Complete!";
-        }
-    }
+                let isCurrent = false;
+                let isPassed = false;
 
-    function updateCountdowns() {
-        const christmas = holidays[1].start;
-        const easter = holidays[3].start;
-        const summer = holidays[5].start;
-
-        document.getElementById('c-christmas').innerText = Math.max(0, getDaysUntil(christmas));
-        document.getElementById('c-easter').innerText = Math.max(0, getDaysUntil(easter));
-        document.getElementById('c-summer').innerText = Math.max(0, getDaysUntil(summer));
-
-        const relaxCount = document.getElementById('relax-big-count');
-        if(relaxCount) {
-            relaxCount.innerText = Math.max(0, getDaysUntil(summer));
-        }
-    }
-
-    function openModal(h, daysLeft) {
-        currentHolidayId = h.id;
-        const startFormatted = h.start.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const endFormatted = h.end.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        
-        document.getElementById('m-title').innerText = h.n;
-        document.getElementById('m-list').innerHTML = 
-            `<li><strong>Start Date:</strong> ${startFormatted}</li>` + 
-            `<li><strong>Return Date:</strong> ${endFormatted}</li>` +
-            `<li><strong>Break Type:</strong> ${h.type}</li>` +
-            `<li><strong>Status:</strong> ${daysLeft <= 0 ? 'Currently on break!' : daysLeft + ' days remaining until start.'}</li>`;
-        document.getElementById('overlay').style.display = 'flex';
-    }
-
-    /* Timetable Live Functionality */
-    function renderTimetable() {
-        const container = document.getElementById('timetable-list');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-        const now = new Date();
-        const currentDayIdx = now.getDay();
-
-        days.forEach((dName, idx) => {
-            const dayLessons = schedule.filter(s => s.day === dName);
-            if(dayLessons.length === 0) return;
-
-            const dayGroup = document.createElement('div');
-            dayGroup.className = 'day-group';
-
-            let titleMarkup = `<div class="day-title">${dName}${currentDayIdx === (idx + 1) ? ' (Today)' : ''}</div>`;
-            let rowsMarkup = '';
-
-            dayLessons.forEach(l => {
-                let isActive = false;
-                if (currentDayIdx === (idx + 1)) {
-                    const startMin = parseTimeToMinutes(l.start);
-                    const endMin = parseTimeToMinutes(l.end);
-                    const nowMin = (now.getHours() * 60) + now.getMinutes();
-                    if (nowMin >= startMin && nowMin < endMin) {
-                        isActive = true;
+                if (isViewingToday) {
+                    if (now >= startTime && now <= endTime) {
+                        isCurrent = true;
+                    } else if (now > endTime) {
+                        isPassed = true;
                     }
                 }
 
-                rowsMarkup += `
-                    <div class="timetable-row ${isActive ? 'active-lesson' : ''}">
-                        <div class="lesson-time">${l.start} - ${l.end}</div>
-                        <div class="lesson-details">
-                            <div class="lesson-name">${l.name}</div>
-                            <div class="lesson-meta">Teacher: ${l.teacher}</div>
+                // Card styles based on status
+                let cardStyle = "glass-card p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-800/80";
+                let statusBadge = '';
+
+                if (isViewingToday) {
+                    if (isCurrent) {
+                        cardStyle += " active-lesson-glow bg-slate-900/90 border-brand-500/50";
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span> IN PROGRESS</span>`;
+                    } else if (isPassed) {
+                        cardStyle += " opacity-50 bg-slate-950/40";
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400">FINISHED</span>`;
+                    } else {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800/80 text-slate-300">UPCOMING</span>`;
+                    }
+                }
+
+                html += `
+                    <div class="${cardStyle}">
+                        <div class="flex items-start gap-4">
+                            <!-- Time Badge -->
+                            <div class="flex flex-col items-center justify-center bg-slate-900/90 border border-slate-800 px-3.5 py-2 rounded-xl min-w-[90px] text-center">
+                                <span class="font-mono text-sm font-bold text-white">${lesson.start}</span>
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">to</span>
+                                <span class="font-mono text-sm font-bold text-slate-300">${lesson.end}</span>
+                            </div>
+
+                            <!-- Details -->
+                            <div class="space-y-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="font-bold text-base text-white">${lesson.title}</h3>
+                                    ${statusBadge}
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4 text-xs text-slate-400 font-medium">
+                                    <span class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chalkboard-user text-brand-400"></i> ${teacherName}
+                                    </span>
+                                    <span class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-location-dot text-accent-cyan"></i> Room ${lesson.room}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="lesson-meta" style="font-weight:bold; color:var(--acc);">${l.room}</div>
                     </div>
                 `;
             });
 
-            dayGroup.innerHTML = titleMarkup + rowsMarkup;
-            container.appendChild(dayGroup);
+            container.innerHTML = html;
+        }
+
+        function updateLiveHeroTicker() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const statusBadge = document.getElementById('liveStatusBadge');
+            const titleElem = document.getElementById('liveLessonTitle');
+            const metaElem = document.getElementById('liveLessonMeta');
+            const countdownElem = document.getElementById('heroCountdown');
+            const countdownLabel = document.getElementById('countdownLabel');
+            const progressBar = document.getElementById('heroProgressBar');
+
+            // Header date update
+            const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+            document.getElementById('headerLiveDate').innerText = now.toLocaleDateString('en-GB', options);
+            document.getElementById('headerLiveClock').innerText = now.toLocaleTimeString('en-GB');
+
+            // Check if Weekend
+            if (currentDay === 0 || currentDay === 6) {
+                statusBadge.innerText = "WEEKEND";
+                titleElem.innerText = "Enjoy Your Weekend!";
+                metaElem.innerHTML = `<span><i class="fa-solid fa-mug-hot text-amber-400 mr-1.5"></i> No lessons scheduled today</span>`;
+                countdownLabel.innerText = "Time Until Monday 10:00";
+                
+                // Calculate time to next Monday 10:00
+                let nextMon = new Date(now);
+                nextMon.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+                nextMon.setHours(10, 0, 0, 0);
+                
+                const diff = nextMon - now;
+                countdownElem.innerText = formatCountdown(diff);
+                progressBar.style.width = '100%';
+                return;
+            }
+
+            const todayLessons = BASE_TIMETABLE[currentDay] || [];
+            if (todayLessons.length === 0) {
+                statusBadge.innerText = "NO LESSONS";
+                titleElem.innerText = "No Lessons Today";
+                metaElem.innerHTML = `<span>Free Day</span>`;
+                countdownElem.innerText = "00:00:00";
+                progressBar.style.width = '0%';
+                return;
+            }
+
+            const dayStart = parseTimeToDate(todayLessons[0].start);
+            const dayEnd = parseTimeToDate(todayLessons[todayLessons.length - 1].end);
+
+            // Check Before College Starts
+            if (now < dayStart) {
+                statusBadge.innerText = "UPCOMING DAY";
+                titleElem.innerText = "College Starts Soon";
+                
+                let firstTeacher = todayLessons[0].teacher;
+                if (todayLessons[0].isAlternating) firstTeacher = getTuesdayTeacher(now).teacher;
+
+                metaElem.innerHTML = `
+                    <span><i class="fa-solid fa-play text-brand-400 mr-1.5"></i> First Lesson: ${todayLessons[0].title}</span>
+                    <span><i class="fa-solid fa-door-open text-accent-cyan mr-1.5"></i> Room ${todayLessons[0].room}</span>
+                `;
+                countdownLabel.innerText = "Starts In";
+                const diff = dayStart - now;
+                countdownElem.innerText = formatCountdown(diff);
+                progressBar.style.width = '0%';
+                return;
+            }
+
+            // Check After College Ends
+            if (now > dayEnd) {
+                statusBadge.innerText = "COLLEGE CLOSED";
+                titleElem.innerText = "Finished for Today!";
+                metaElem.innerHTML = `<span><i class="fa-solid fa-circle-check text-emerald-400 mr-1.5"></i> All lessons completed</span>`;
+                countdownLabel.innerText = "Day Finished";
+                countdownElem.innerText = "00:00:00";
+                progressBar.style.width = '100%';
+                return;
+            }
+
+            // Check inside active lessons or breaks
+            let currentActive = null;
+            let nextUpcoming = null;
+
+            for (let i = 0; i < todayLessons.length; i++) {
+                const lStart = parseTimeToDate(todayLessons[i].start);
+                const lEnd = parseTimeToDate(todayLessons[i].end);
+
+                if (now >= lStart && now <= lEnd) {
+                    currentActive = todayLessons[i];
+                    break;
+                } else if (now < lStart) {
+                    nextUpcoming = todayLessons[i];
+                    break;
+                }
+            }
+
+            if (currentActive) {
+                let teacher = currentActive.teacher;
+                if (currentActive.isAlternating) teacher = getTuesdayTeacher(now).teacher;
+
+                statusBadge.innerText = "LESSON IN PROGRESS";
+                titleElem.innerText = currentActive.title;
+                metaElem.innerHTML = `
+                    <span><i class="fa-solid fa-chalkboard-user text-brand-400 mr-1.5"></i> ${teacher}</span>
+                    <span><i class="fa-solid fa-location-dot text-accent-cyan mr-1.5"></i> Room ${currentActive.room}</span>
+                    <span><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i> ${currentActive.start} - ${currentActive.end}</span>
+                `;
+                countdownLabel.innerText = "Lesson Ends In";
+
+                const lStart = parseTimeToDate(currentActive.start);
+                const lEnd = parseTimeToDate(currentActive.end);
+                const totalMs = lEnd - lStart;
+                const elapsedMs = now - lStart;
+                const remainingMs = lEnd - now;
+
+                countdownElem.innerText = formatCountdown(remainingMs);
+                const pct = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
+                progressBar.style.width = `${pct}%`;
+
+            } else if (nextUpcoming) {
+                statusBadge.innerText = "BREAK / LUNCH";
+                titleElem.innerText = "College Break";
+                
+                let nextTeacher = nextUpcoming.teacher;
+                if (nextUpcoming.isAlternating) nextTeacher = getTuesdayTeacher(now).teacher;
+
+                metaElem.innerHTML = `
+                    <span><i class="fa-solid fa-forward text-brand-400 mr-1.5"></i> Next: ${nextUpcoming.title}</span>
+                    <span><i class="fa-solid fa-location-dot text-accent-cyan mr-1.5"></i> Room ${nextUpcoming.room} (${nextTeacher})</span>
+                `;
+                countdownLabel.innerText = "Next Lesson In";
+
+                const nextStart = parseTimeToDate(nextUpcoming.start);
+                const remainingMs = nextStart - now;
+
+                countdownElem.innerText = formatCountdown(remainingMs);
+                progressBar.style.width = '100%';
+            }
+        }
+
+        function renderHolidays() {
+            const grid = document.getElementById('holidaysGrid');
+            const now = new Date();
+
+            let html = '';
+
+            HOLIDAYS_AND_INSETS.forEach(item => {
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+
+                const isPast = now > endDate;
+                const isActiveNow = (now >= startDate && now <= endDate);
+
+                let badgeColor = item.category === 'inset' 
+                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+
+                let cardClass = "glass-card p-6 rounded-2xl flex flex-col justify-between space-y-4 border";
+                if (isActiveNow) {
+                    cardClass += " border-brand-500/50 bg-brand-950/20 active-lesson-glow";
+                } else if (isPast) {
+                    cardClass += " border-slate-800/60 opacity-50";
+                } else {
+                    cardClass += " border-slate-800/80";
+                }
+
+                // Format display dates
+                const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+                const startStr = startDate.toLocaleDateString('en-GB', dateOpts);
+                const endStr = endDate.toLocaleDateString('en-GB', dateOpts);
+                const dateDisplay = (startStr === endStr) ? startStr : `${startStr} – ${endStr}`;
+
+                let countdownText = "";
+                let countdownHeader = "Starts In";
+
+                if (isActiveNow) {
+                    countdownHeader = "Ends In";
+                    countdownText = formatCountdown(endDate - now);
+                } else if (isPast) {
+                    countdownHeader = "Status";
+                    countdownText = "Completed";
+                } else {
+                    countdownText = formatCountdown(startDate - now);
+                }
+
+                html += `
+                    <div class="${cardClass}">
+                        <div class="space-y-3">
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-semibold border ${badgeColor}">
+                                    ${item.type}
+                                </span>
+                                ${isActiveNow ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500 text-white animate-pulse">ACTIVE NOW</span>` : ''}
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${item.name}</h3>
+                                <p class="text-xs text-brand-400 font-semibold mt-1">
+                                    <i class="fa-regular fa-calendar-days mr-1.5"></i>${dateDisplay}
+                                </p>
+                            </div>
+
+                            <p class="text-xs text-slate-400">${item.description}</p>
+                        </div>
+
+                        <!-- Live Countdown Footer -->
+                        <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">${countdownHeader}</span>
+                            <span class="font-mono text-base font-bold ${isPast ? 'text-slate-500' : 'text-accent-cyan'}">
+                                ${countdownText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateDaySelectorUI();
+            renderSchedule();
+            renderHolidays();
+            updateLiveHeroTicker();
+
+            // Main Ticker Loop (1 Second Interval)
+            setInterval(() => {
+                updateLiveHeroTicker();
+                
+                // Re-render schedule if viewing today to update live progress badges
+                const currentDayNum = new Date().getDay();
+                if (selectedDayIndex === currentDayNum) {
+                    renderSchedule();
+                }
+
+                // If holidays tab is active, keep countdowns updated
+                if (currentTab === 'holidays') {
+                    renderHolidays();
+                }
+            }, 1000);
         });
-    }
-
-    function parseTimeToMinutes(timeStr) {
-        const parts = timeStr.split(':');
-        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-    }
-
-    function updateLessonTimer() {
-        const now = new Date();
-        const dayIdx = now.getDay(); 
-        const nowMin = (now.getHours() * 60) + now.getMinutes();
-        const nowSec = now.getSeconds();
-
-        const todayLessons = schedule.filter(s => s.dayIdx === dayIdx);
-
-        let activeLesson = null;
-        let nextLesson = null;
-
-        for (let l of todayLessons) {
-            const startMin = parseTimeToMinutes(l.start);
-            const endMin = parseTimeToMinutes(l.end);
-
-            if (nowMin >= startMin && nowMin < endMin) {
-                activeLesson = l;
-            } else if (nowMin < startMin && !nextLesson) {
-                nextLesson = l;
-            }
-        }
-
-        const titleEl = document.getElementById('current-lesson-title');
-        const timerEl = document.getElementById('timer-countdown');
-        const subEl = document.getElementById('next-lesson-sub');
-
-        if (!titleEl || !timerEl || !subEl) return;
-
-        if (activeLesson) {
-            titleEl.innerText = activeLesson.name;
-            titleEl.style.color = '#10b981';
-
-            const endMin = parseTimeToMinutes(activeLesson.end);
-            const totalSecRemaining = (endMin * 60) - ((nowMin * 60) + nowSec);
-
-            const h = Math.floor(totalSecRemaining / 3600);
-            const m = Math.floor((totalSecRemaining % 3600) / 60);
-            const s = totalSecRemaining % 60;
-
-            timerEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-            if (nextLesson) {
-                subEl.innerText = `Up Next: ${nextLesson.name} at ${nextLesson.start} (${nextLesson.room})`;
-            } else {
-                subEl.innerText = "No more classes scheduled for today!";
-            }
-        } else {
-            titleEl.style.color = '#f1f5f9';
-            if (nextLesson) {
-                titleEl.innerText = "Next Class Begins Soon";
-                const startMin = parseTimeToMinutes(nextLesson.start);
-                const totalSecRemaining = (startMin * 60) - ((nowMin * 60) + nowSec);
-
-                const h = Math.floor(totalSecRemaining / 3600);
-                const m = Math.floor((totalSecRemaining % 3600) / 60);
-                const s = totalSecRemaining % 60;
-
-                timerEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                subEl.innerText = `Up Next: ${nextLesson.name} (${nextLesson.room}) with ${nextLesson.teacher}`;
-            } else {
-                titleEl.innerText = "No Active Classes";
-                timerEl.innerText = "00:00:00";
-                subEl.innerText = "You are done with lessons for today!";
-            }
-        }
-    }
-
-    setInterval(renderGrid, 60000);
-    setInterval(updateLessonTimer, 1000);
-    
-    renderGrid();
-    updateLessonTimer();
-</script>
+    </script>
 </body>
 </html>
