@@ -1,673 +1,266 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  signInWithCustomToken, 
-  onAuthStateChanged 
-} from 'firebase/auth';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  onSnapshot 
-} from 'firebase/firestore';
-import { 
-  Shield, 
-  Skull, 
-  Users, 
-  Crown, 
-  Flame, 
-  Moon, 
-  Sun, 
-  RotateCcw, 
-  Award, 
-  Vote, 
-  Volume2, 
-  VolumeX,
-  History,
-  AlertTriangle,
-  ChevronRight,
-  Copy,
-  Check,
-  UserCheck,
-  Radio,
-  Sparkles
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Traitors - Online Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
+    .gold-accent { color: #f59e0b; }
+    .btn-gold { background-color: #d97706; color: #ffffff; }
+    .btn-gold:hover { background-color: #b45309; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
 
-// --- FIREBASE INITIALIZATION ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'traitors-app';
+  <div id="app" class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-2xl text-center">
+    <h1 class="text-3xl font-bold text-amber-500 mb-2 tracking-widest">THE TRAITORS</h1>
+    <p class="text-xs text-slate-400 mb-6 uppercase tracking-wider">A Game of Deception & Trust</p>
+    <div id="content">Loading...</div>
+  </div>
 
-// Sound Synthesizer using Web Audio API
-class SoundFX {
-  constructor() {
-    this.ctx = null;
-    this.muted = false;
-  }
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
-    }
-  }
-
-  playGong() {
-    if (this.muted) return;
-    this.init();
-    if (!this.ctx) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(55, this.ctx.currentTime + 3);
-
-      gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 3.5);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + 3.5);
-    } catch (e) {
-      console.log("Audio play error", e);
-    }
-  }
-
-  playSuspense() {
-    if (this.muted) return;
-    this.init();
-    if (!this.ctx) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(220, this.ctx.currentTime + 1.5);
-
-      gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.8);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + 1.8);
-    } catch (e) {}
-  }
-
-  playWhisper() {
-    if (this.muted) return;
-    this.init();
-    if (!this.ctx) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.8);
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.8);
-    } catch(e) {}
-  }
-}
-
-const sfx = new SoundFX();
-
-// Helper to generate a 4-letter room code
-const generateRoomCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 4; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-export default function App() {
-  // Auth state
-  const [user, setUser] = useState(null);
-  const [playerName, setPlayerName] = useState('');
-  const [roomCode, setRoomCode] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  // Joined Game state
-  const [joinedRoomId, setJoinedRoomId] = useState(null);
-  const [gameState, setGameState] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [soundEnabled, setSoundEnabled] = useState(true);
-
-  // Local inputs
-  const [inputCode, setInputCode] = useState('');
-
-  // Auto scroll logs
-  const logEndRef = useRef(null);
-
-  // 1. Firebase Authentication setup
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (err) {
-        console.error("Auth error:", err);
-      }
+    // -------------------------------------------------------------
+    // REPLACE WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
-    initAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let roomCode = "";
+    let roomData = null;
+
+    // Authenticate player anonymously
+    signInAnonymously(auth).catch((err) => console.error("Auth error:", err));
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        renderLobbyScreen();
+      }
     });
-    return () => unsubscribe();
-  }, []);
 
-  // 2. Real-time Firestore Room Sync
-  useEffect(() => {
-    if (!user || !joinedRoomId) return;
-
-    // Strict Rule 1 Path: public room document
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-    
-    const unsubscribe = onSnapshot(
-      roomRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          setGameState(data);
-          setErrorMsg('');
-        } else {
-          setErrorMsg('Game room has been closed or removed.');
-          setJoinedRoomId(null);
-          setGameState(null);
-        }
-      },
-      (error) => {
-        console.error("Firestore snapshot error:", error);
-        setErrorMsg('Connection error. Retrying...');
+    function generateRoomCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-    );
-
-    return () => unsubscribe();
-  }, [user, joinedRoomId]);
-
-  // Auto scroll event log
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [gameState?.logs]);
-
-  const toggleSound = () => {
-    sfx.muted = soundEnabled;
-    setSoundEnabled(!soundEnabled);
-  };
-
-  // Sound effects on phase transitions
-  useEffect(() => {
-    if (!gameState) return;
-    if (gameState.phase === 'NIGHT_CONCLAVE') sfx.playWhisper();
-    if (gameState.phase === 'MORNING_REVEAL' || gameState.phase === 'BANISHMENT_REVEAL') sfx.playGong();
-    if (gameState.phase === 'ROUND_TABLE_VOTE') sfx.playSuspense();
-  }, [gameState?.phase]);
-
-  // --- ACTIONS ---
-
-  // Create a new room
-  const handleCreateRoom = async () => {
-    if (!user) return;
-    if (!playerName.trim()) {
-      setErrorMsg('Please enter your name to create a room.');
-      return;
+      return code;
     }
 
-    const code = generateRoomCode();
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
+    // -------------------------------------------------------------
+    // VIEWS & LOGIC
+    // -------------------------------------------------------------
+    function renderLobbyScreen() {
+      const content = document.getElementById("content");
+      content.innerHTML = `
+        <div class="space-y-4">
+          <input id="playerName" type="text" placeholder="Enter Your Name" class="w-full p-3 bg-slate-900 border border-slate-700 rounded text-center text-white focus:outline-none focus:border-amber-500" />
+          
+          <div class="pt-4 border-t border-slate-700">
+            <button id="btnCreate" class="w-full py-3 btn-gold font-bold rounded shadow mb-3">Create New Game</button>
+            <div class="flex gap-2">
+              <input id="inputCode" type="text" maxlength="4" placeholder="CODE" class="w-24 p-3 bg-slate-900 border border-slate-700 rounded text-center text-white uppercase font-mono font-bold focus:outline-none focus:border-amber-500" />
+              <button id="btnJoin" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 font-bold rounded">Join Room</button>
+            </div>
+          </div>
+          <p id="errorMsg" class="text-red-400 text-sm hidden"></p>
+        </div>
+      `;
 
-    const initialRoomData = {
-      code,
-      hostId: user.uid,
-      phase: 'LOBBY', // LOBBY, ROLE_REVEAL, NIGHT_CONCLAVE, MORNING_REVEAL, ROUND_TABLE_VOTE, BANISHMENT_REVEAL, GAME_OVER
-      roundNumber: 1,
-      players: [
-        {
-          id: user.uid,
-          name: playerName.trim(),
-          isHost: true,
-          isAlive: true,
-          role: null
-        }
-      ],
-      nightVotes: {}, // { traitorId: targetId }
-      murderedPlayer: null,
-      dayVotes: {}, // { voterId: targetId }
-      banishedPlayer: null,
-      winner: null,
-      logs: [{
-        text: `Room created by ${playerName.trim()}. Share code ${code} for players to join!`,
-        type: 'info',
-        time: Date.now()
-      }]
-    };
-
-    try {
-      await setDoc(roomRef, initialRoomData);
-      setJoinedRoomId(code);
-      setRoomCode(code);
-      setErrorMsg('');
-      sfx.playGong();
-    } catch (e) {
-      console.error(e);
-      setErrorMsg('Failed to create room. Please try again.');
-    }
-  };
-
-  // Join an existing room
-  const handleJoinRoom = async () => {
-    if (!user) return;
-    if (!playerName.trim()) {
-      setErrorMsg('Please enter your name.');
-      return;
-    }
-    const cleanCode = inputCode.trim().toUpperCase();
-    if (!cleanCode || cleanCode.length !== 4) {
-      setErrorMsg('Please enter a valid 4-character Room Code.');
-      return;
+      document.getElementById("btnCreate").onclick = createRoom;
+      document.getElementById("btnJoin").onclick = joinRoom;
     }
 
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', cleanCode);
+    async function createRoom() {
+      const nameInput = document.getElementById("playerName").value.trim();
+      if (!nameInput) return showError("Please enter your name.");
 
-    try {
+      const code = generateRoomCode();
+      const initialData = {
+        code: code,
+        hostId: currentUser.uid,
+        phase: "LOBBY",
+        players: [{ id: currentUser.uid, name: nameInput, isHost: true, isAlive: true, role: null }],
+        nightVotes: {},
+        dayVotes: {}
+      };
+
+      try {
+        await setDoc(doc(db, "rooms", code), initialData);
+        listenToRoom(code);
+      } catch (e) {
+        showError("Failed to create room: " + e.message);
+      }
+    }
+
+    async function joinRoom() {
+      const nameInput = document.getElementById("playerName").value.trim();
+      const codeInput = document.getElementById("inputCode").value.trim().toUpperCase();
+      if (!nameInput) return showError("Please enter your name.");
+      if (codeInput.length !== 4) return showError("Enter a 4-character room code.");
+
+      const roomRef = doc(db, "rooms", codeInput);
       const roomSnap = await getDoc(roomRef);
+
       if (!roomSnap.exists()) {
-        setErrorMsg('Room not found. Check the code and try again.');
-        return;
+        return showError("Room does not exist. Check the code.");
       }
 
       const data = roomSnap.data();
+      if (data.phase !== "LOBBY") return showError("Game has already started.");
 
-      // Check if player already in room
-      const existingPlayer = data.players.find(p => p.id === user.uid);
-      if (existingPlayer) {
-        setJoinedRoomId(cleanCode);
-        setRoomCode(cleanCode);
-        setErrorMsg('');
-        return;
+      const existingPlayer = data.players.find(p => p.id === currentUser.uid);
+      if (!existingPlayer) {
+        if (data.players.length >= 8) return showError("Room is full (8/8).");
+        data.players.push({ id: currentUser.uid, name: nameInput, isHost: false, isAlive: true, role: null });
+        await updateDoc(roomRef, { players: data.players });
       }
 
-      if (data.phase !== 'LOBBY') {
-        setErrorMsg('Game in this room has already started.');
-        return;
-      }
-
-      if (data.players.length >= 8) {
-        setErrorMsg('Room is full (8/8 players).');
-        return;
-      }
-
-      const updatedPlayers = [
-        ...data.players,
-        {
-          id: user.uid,
-          name: playerName.trim(),
-          isHost: false,
-          isAlive: true,
-          role: null
-        }
-      ];
-
-      const newLog = {
-        text: `${playerName.trim()} joined the room (${updatedPlayers.length}/8).`,
-        type: 'info',
-        time: Date.now()
-      };
-
-      await updateDoc(roomRef, {
-        players: updatedPlayers,
-        logs: [...data.logs, newLog]
-      });
-
-      setJoinedRoomId(cleanCode);
-      setRoomCode(cleanCode);
-      setErrorMsg('');
-      sfx.playWhisper();
-    } catch (e) {
-      console.error(e);
-      setErrorMsg('Error joining room. Please try again.');
-    }
-  };
-
-  // Host Starts Game
-  const handleStartGame = async () => {
-    if (!gameState || gameState.hostId !== user.uid) return;
-    if (gameState.players.length < 8) {
-      setErrorMsg('You need exactly 8 players to start the game.');
-      return;
+      listenToRoom(codeInput);
     }
 
-    // Assign 2 random Traitors and 6 Faithfuls
-    const playerIndices = [0, 1, 2, 3, 4, 5, 6, 7];
-    const traitorIdx1 = playerIndices.splice(Math.floor(Math.random() * playerIndices.length), 1)[0];
-    const traitorIdx2 = playerIndices.splice(Math.floor(Math.random() * playerIndices.length), 1)[0];
-
-    const updatedPlayers = gameState.players.map((p, idx) => ({
-      ...p,
-      isAlive: true,
-      role: (idx === traitorIdx1 || idx === traitorIdx2) ? 'TRAITOR' : 'FAITHFUL'
-    }));
-
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-
-    const newLogs = [
-      ...gameState.logs,
-      {
-        text: "The gates are locked. 2 Traitors walk among the 8 Faithful...",
-        type: 'warning',
-        time: Date.now()
-      }
-    ];
-
-    await updateDoc(roomRef, {
-      players: updatedPlayers,
-      phase: 'ROLE_REVEAL',
-      logs: newLogs
-    });
-
-    sfx.playGong();
-  };
-
-  // Move from Role Reveal to First Night
-  const handleProceedToNight = async () => {
-    if (!gameState || gameState.hostId !== user.uid) return;
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-
-    const newLog = {
-      text: `--- Night ${gameState.roundNumber}: The Traitors meet in secret ---`,
-      type: 'night',
-      time: Date.now()
-    };
-
-    await updateDoc(roomRef, {
-      phase: 'NIGHT_CONCLAVE',
-      nightVotes: {},
-      logs: [...gameState.logs, newLog]
-    });
-  };
-
-  // Traitor Murder Vote
-  const handleTraitorMurderVote = async (targetId) => {
-    if (!gameState || !user) return;
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-
-    const updatedNightVotes = { ...gameState.nightVotes, [user.uid]: targetId };
-    
-    const aliveTraitors = gameState.players.filter(p => p.isAlive && p.role === 'TRAITOR');
-    const votedTraitorCount = Object.keys(updatedNightVotes).length;
-
-    // Check if all alive traitors have voted
-    if (votedTraitorCount >= aliveTraitors.length) {
-      // Resolve victim
-      const counts = {};
-      Object.values(updatedNightVotes).forEach(tid => {
-        counts[tid] = (counts[tid] || 0) + 1;
-      });
-
-      let maxVotes = 0;
-      let candidates = [];
-      Object.entries(counts).forEach(([tid, count]) => {
-        if (count > maxVotes) {
-          maxVotes = count;
-          candidates = [tid];
-        } else if (count === maxVotes) {
-          candidates.push(tid);
-        }
-      });
-
-      // Random tie breaker if traitors disagreed
-      const victimId = candidates[Math.floor(Math.random() * candidates.length)];
-      const victim = gameState.players.find(p => p.id === victimId);
-
-      const updatedPlayers = gameState.players.map(p => 
-        p.id === victimId ? { ...p, isAlive: false } : p
-      );
-
-      const newLog = {
-        text: `Night ${gameState.roundNumber}: A sinister murder occurred in the dark.`,
-        type: 'danger',
-        time: Date.now()
-      };
-
-      await updateDoc(roomRef, {
-        nightVotes: updatedNightVotes,
-        players: updatedPlayers,
-        murderedPlayer: victim,
-        phase: 'MORNING_REVEAL',
-        logs: [...gameState.logs, newLog]
-      });
-
-      sfx.playGong();
-    } else {
-      // Just record vote and wait for second traitor
-      await updateDoc(roomRef, {
-        nightVotes: updatedNightVotes
+    function listenToRoom(code) {
+      roomCode = code;
+      onSnapshot(doc(db, "rooms", code), (snapshot) => {
+        if (!snapshot.exists()) return;
+        roomData = snapshot.data();
+        renderGameUI();
       });
     }
-  };
 
-  // Host / Player moves to Round Table
-  const handleProceedToRoundTable = async () => {
-    if (!gameState) return;
-    
-    // Check win condition right after murder
-    if (checkAndSetWinCondition(gameState.players)) return;
+    function renderGameUI() {
+      const content = document.getElementById("content");
+      const me = roomData.players.find(p => p.id === currentUser.uid);
 
-    if (gameState.hostId !== user.uid) return;
-
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-    
-    const newLog = {
-      text: `--- Day ${gameState.roundNumber}: Round Table Banishment Vote ---`,
-      type: 'info',
-      time: Date.now()
-    };
-
-    await updateDoc(roomRef, {
-      phase: 'ROUND_TABLE_VOTE',
-      dayVotes: {},
-      logs: [...gameState.logs, newLog]
-    });
-  };
-
-  // Day Banishment Vote
-  const handleCastDayVote = async (targetId) => {
-    if (!gameState || !user) return;
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-
-    const updatedDayVotes = { ...gameState.dayVotes, [user.uid]: targetId };
-    const alivePlayers = gameState.players.filter(p => p.isAlive);
-
-    // If all alive players have cast their votes
-    if (Object.keys(updatedDayVotes).length >= alivePlayers.length) {
-      const counts = {};
-      Object.values(updatedDayVotes).forEach(tid => {
-        counts[tid] = (counts[tid] || 0) + 1;
-      });
-
-      let maxVotes = 0;
-      let candidates = [];
-      Object.entries(counts).forEach(([tid, count]) => {
-        if (count > maxVotes) {
-          maxVotes = count;
-          candidates = [tid];
-        } else if (count === maxVotes) {
-          candidates.push(tid);
-        }
-      });
-
-      const banishedId = candidates[Math.floor(Math.random() * candidates.length)];
-      const banishedPlayer = gameState.players.find(p => p.id === banishedId);
-
-      const updatedPlayers = gameState.players.map(p => 
-        p.id === banishedId ? { ...p, isAlive: false } : p
-      );
-
-      const newLog = {
-        text: `${banishedPlayer.name} was banished by the Round Table!`,
-        type: 'warning',
-        time: Date.now()
-      };
-
-      await updateDoc(roomRef, {
-        dayVotes: updatedDayVotes,
-        players: updatedPlayers,
-        banishedPlayer: banishedPlayer,
-        phase: 'BANISHMENT_REVEAL',
-        logs: [...gameState.logs, newLog]
-      });
-
-      sfx.playGong();
-    } else {
-      await updateDoc(roomRef, {
-        dayVotes: updatedDayVotes
-      });
-    }
-  };
-
-  // Check & Update Win Conditions
-  const checkAndSetWinCondition = async (playersList) => {
-    const alive = playersList.filter(p => p.isAlive);
-    const aliveTraitors = alive.filter(p => p.role === 'TRAITOR');
-    const aliveFaithfuls = alive.filter(p => p.role === 'FAITHFUL');
-
-    let winner = null;
-
-    if (aliveTraitors.length === 0) {
-      winner = 'FAITHFULS';
-    } else if (aliveTraitors.length >= aliveFaithfuls.length) {
-      winner = 'TRAITORS';
-    }
-
-    if (winner) {
-      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-      const newLog = {
-        text: winner === 'FAITHFULS' 
-          ? "VICTORY! All Traitors have been banished!" 
-          : "DEFEAT! Traitors equal or outnumber the Faithful!",
-        type: winner === 'FAITHFULS' ? 'success' : 'danger',
-        time: Date.now()
-      };
-
-      await updateDoc(roomRef, {
-        phase: 'GAME_OVER',
-        winner: winner,
-        logs: [...gameState.logs, newLog]
-      });
-      return true;
-    }
-    return false;
-  };
-
-  // Next Round Trigger (Night Phase)
-  const handleProceedToNextRound = async () => {
-    if (!gameState) return;
-    if (await checkAndSetWinCondition(gameState.players)) return;
-
-    if (gameState.hostId !== user.uid) return;
-
-    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', joinedRoomId);
-    const nextRound = gameState.roundNumber + 1;
-
-    const newLog = {
-      text: `--- Night ${nextRound}: The Traitors assemble in the darkness ---`,
-      type: 'night',
-      time: Date.now()
-    };
-
-    await updateDoc(roomRef, {
-      phase: 'NIGHT_CONCLAVE',
-      roundNumber: nextRound,
-      nightVotes: {},
-      dayVotes: {},
-      murderedPlayer: null,
-      banishedPlayer: null,
-      logs: [...gameState.logs, newLog]
-    });
-  };
-
-  // Helper getters
-  const me = gameState?.players?.find(p => p.id === user?.uid);
-  const myRole = me?.role;
-  const isHost = gameState?.hostId === user?.uid;
-  const alivePlayers = gameState?.players?.filter(p => p.isAlive) || [];
-
-  const copyRoomCode = () => {
-    if (roomCode) {
-      navigator.clipboard.writeText(roomCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col justify-between selection:bg-amber-600 selection:text-white">
-      
-      {/* HEADER BAR */}
-      <header className="border-b border-amber-900/40 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-2xl">
-        <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-br from-amber-600 to-red-900 p-2 rounded-lg border border-amber-500/30 shadow-lg shadow-amber-950/50">
-            <Flame className="w-6 h-6 text-amber-200 animate-pulse" />
-          </div>
-          <div>
-            <h1 className="font-serif text-lg sm:text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600">
-              THE TRAITORS
-            </h1>
-            <p className="text-[10px] sm:text-xs text-amber-500/80 tracking-widest uppercase">Multi-Device Real-Time Edition</p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {joinedRoomId && (
-            <div className="flex items-center space-x-2 bg-slate-800/90 border border-amber-600/40 px-3 py-1.5 rounded-xl shadow-inner">
-              <span className="text-xs text-slate-400 uppercase font-serif">Code:</span>
-              <span className="font-mono font-bold text-amber-400 text-sm tracking-widest">{joinedRoomId}</span>
-              <button 
-                onClick={copyRoomCode} 
-                className="text-slate-400 hover:text-amber-300 ml-1 transition"
-                title="Copy Room Code"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              </button>
+      if (roomData.phase === "LOBBY") {
+        content.innerHTML = `
+          <div class="space-y-4">
+            <p class="text-sm text-slate-400">Share this Room Code:</p>
+            <div class="text-4xl font-mono font-bold text-amber-500 tracking-wider">${roomData.code}</div>
+            
+            <div class="bg-slate-900 p-3 rounded text-left border border-slate-700">
+              <p class="text-xs text-slate-400 mb-2 font-bold uppercase">Players Joined (${roomData.players.length}/8)</p>
+              <ul class="space-y-1">
+                ${roomData.players.map(p => `<li class="text-sm font-medium text-slate-200">▪ ${p.name} ${p.isHost ? '<span class="text-amber-500 text-xs">(Host)</span>' : ''}</li>`).join('')}
+              </ul>
             </div>
-          )}
 
-          <button
-            onClick={toggleSound}
-            className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 text-amber-400 hover:bg-slate-700 transition"
-            title="Toggle Audio Effects"
-          >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-slate-500" />}
-          </button>
-        </div>
-      </header>
+            ${me.isHost ? `
+              <button id="btnStart" class="w-full py-3 btn-gold font-bold rounded ${roomData.players.length < 8 ? 'opacity-50 cursor-not-allowed' : ''}">Start Game</button>
+            ` : '<p class="text-sm text-slate-400 italic">Waiting for host to start...</p>'}
+          </div>
+        `;
 
-      {/* MAIN CONTAINER */}
-      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+        if (me.isHost) {
+          document.getElementById("btnStart").onclick = startGame;
+        }
+      } else if (roomData.phase === "ROLE_REVEAL") {
+        content.innerHTML = `
+          <div class="space-y-4">
+            <h2 class="text-xl font-bold text-amber-500">Your Secret Role</h2>
+            <div class="p-6 bg-slate-900 rounded border border-amber-500/30">
+              <span class="text-2xl font-bold ${me.role === 'TRAITOR' ? 'text-red-500' : 'text-emerald-400'}">${me.role}</span>
+              <p class="text-xs text-slate-400 mt-2">${me.role === 'TRAITOR' ? 'Work with your fellow Traitor to eliminate Faithfuls.' : 'Find and banish all Traitors at the Round Table.'}</p>
+            </div>
+            ${me.isHost ? `<button id="btnNight" class="w-full py-3 btn-gold font-bold rounded">Proceed to Night Phase</button>` : '<p class="text-sm text-slate-400">Waiting for host...</p>'}
+          </div>
+        `;
 
-        {/* ERROR DISPLAY */}
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-red-950/80 border border-red-700 text-red-200 text-xs rounded-xl flex items-center justify-bet
+        if (me.isHost) {
+          document.getElementById("btnNight").onclick = () => updatePhase("NIGHT");
+        }
+      } else if (roomData.phase === "NIGHT") {
+        if (me.role === "TRAITOR" && me.isAlive) {
+          const faithfuls = roomData.players.filter(p => p.role !== "TRAITOR" && p.isAlive);
+          content.innerHTML = `
+            <div class="space-y-4">
+              <h2 class="text-xl font-bold text-red-500">Night Conclave</h2>
+              <p class="text-sm text-slate-300">Choose a Faithful to murder:</p>
+              <div class="space-y-2">
+                ${faithfuls.map(p => `
+                  <button data-id="${p.id}" class="btn-kill w-full py-2 bg-slate-700 hover:bg-red-900/40 rounded text-slate-200 border border-slate-600">${p.name}</button>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          document.querySelectorAll(".btn-kill").forEach(b => {
+            b.onclick = (e) => submitNightVote(e.target.dataset.id);
+          });
+        } else {
+          content.innerHTML = `
+            <div class="py-8 space-y-3">
+              <h2 class="text-lg font-bold text-slate-300">Night Phase</h2>
+              <p class="text-sm text-slate-400">The Traitors are conferring in secret...</p>
+            </div>
+          `;
+        }
+      }
+    }
+
+    async function startGame() {
+      if (roomData.players.length < 8) return showError("Need 8 players to start!");
+      
+      const indices = [0,1,2,3,4,5,6,7].sort(() => Math.random() - 0.5);
+      const t1 = indices[0];
+      const t2 = indices[1];
+
+      const updatedPlayers = roomData.players.map((p, idx) => ({
+        ...p,
+        role: (idx === t1 || idx === t2) ? "TRAITOR" : "FAITHFUL"
+      }));
+
+      await updateDoc(doc(db, "rooms", roomCode), {
+        players: updatedPlayers,
+        phase: "ROLE_REVEAL"
+      });
+    }
+
+    async function submitNightVote(targetId) {
+      const nightVotes = roomData.nightVotes || {};
+      nightVotes[currentUser.uid] = targetId;
+
+      await updateDoc(doc(db, "rooms", roomCode), { nightVotes });
+      
+      // If both traitors voted, kill player & change phase
+      const traitors = roomData.players.filter(p => p.role === "TRAITOR" && p.isAlive);
+      if (Object.keys(nightVotes).length >= traitors.length) {
+        const victimId = Object.values(nightVotes)[0]; // simple selection
+        const updatedPlayers = roomData.players.map(p => p.id === victimId ? { ...p, isAlive: false } : p);
+        
+        await updateDoc(doc(db, "rooms", roomCode), {
+          players: updatedPlayers,
+          phase: "ROLE_REVEAL",
+          nightVotes: {}
+        });
+      }
+    }
+
+    async function updatePhase(nextPhase) {
+      await updateDoc(doc(db, "rooms", roomCode), { phase: nextPhase });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorMsg");
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
